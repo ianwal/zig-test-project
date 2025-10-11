@@ -82,7 +82,9 @@ pub fn build(b: *std.Build) void {
             },
         }),
     });
-    // exe.root_module.link_libc = true;
+    exe.root_module.link_libc = true;
+    exe.root_module.addIncludePath(b.path("c-src"));
+    exe.root_module.addCSourceFile(.{ .file = b.path("c-src/torben.c") });
 
     // This declares intent for the executable to be installed into the
     // install prefix when running `zig build` (i.e. when executing the default

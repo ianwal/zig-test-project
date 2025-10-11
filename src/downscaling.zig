@@ -1,5 +1,3 @@
-const std = @import("std");
-
 pub fn fillFloatRGB(pRbase: *u8, pGbase: *u8, pBbase: *u8, numRows: i32, numCols: i32, rowStride: i32, colStride: i32, pFloatR: *f32, pFloatG: *f32, pFloatB: *f32) void {
     var pRrow: *u8 = pRbase;
     var pGrow: *u8 = pGbase;

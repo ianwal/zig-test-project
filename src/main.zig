@@ -1,11 +1,22 @@
 const std = @import("std");
 const zig_test_project = @import("zig_test_project");
-const http = std.http;
-const json = std.json;
 const builtin = @import("builtin");
 const torben = @import("torben.zig");
+const pdqhashing = @import("pdqhashing.zig");
+
+const arithmetic = @cImport({
+    @cInclude("torben.h");
+});
 
 pub fn main() !void {
+    const foo = arithmetic.dct_matrix_64();
+    std.debug.print("{s}\n", .{@typeName(@TypeOf(foo))});
+    for (0..1024) |i| {
+        if (!std.math.approxEqAbs(f32, foo[i], pdqhashing.dctMatrix64()[i], 0.000001)) {
+            std.debug.print("Failed on {}. {} != {}\n", .{ i, foo[i], pdqhashing.dctMatrix64()[i] });
+        }
+    }
+    // std.debug.print("{any}", .{pdqhashing.dctMatrix64()});
     return;
 
     // var writer_buffer: [8 * 1024]u8 = undefined;

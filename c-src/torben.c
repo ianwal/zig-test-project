@@ -1,6 +1,29 @@
-#include <cstdio>
-#include <cassert>
-#include <array>
+#include <math.h>
+
+float const *dct_matrix_64()
+{
+  const unsigned int num_rows = 16;
+  const unsigned int num_cols = 64;
+  const float matrix_scale_factor = sqrt(2.0 / num_cols);
+
+  static float dct_matrix[num_rows * num_cols];
+  static int calculated = 0;
+
+  if (!calculated)
+  {
+    for (unsigned int i = 0; i < num_rows; i++)
+    {
+      for (unsigned int j = 0; j < num_cols; j++)
+      {
+        dct_matrix[i * num_cols + j] = matrix_scale_factor *
+                                       cos((3.1415926535 / 2.0 / num_cols) * (i + 1) * (2 * j + 1));
+      }
+    }
+    calculated = 1;
+  }
+
+  return &dct_matrix[0];
+}
 
 // from https://github.com/facebook/ThreatExchange/blob/main/pdq/cpp/hashing/torben.cpp
 float torben(float m[], int n) {
@@ -52,6 +75,7 @@ float torben(float m[], int n) {
   }
 }
 
+/*
 int main()
 {
     {
@@ -78,3 +102,4 @@ int main()
         assert(torben(f.data(), f.size()) == 2.0);
     }
 }
+*/
