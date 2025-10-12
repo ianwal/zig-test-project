@@ -1,4 +1,4 @@
-pub fn fillFloatRGB(pRbase: *u8, pGbase: *u8, pBbase: *u8, numRows: i32, numCols: i32, rowStride: i32, colStride: i32, pFloatR: *f32, pFloatG: *f32, pFloatB: *f32) void {
+pub fn fillFloatRGB(pRbase: *u8, pGbase: *u8, pBbase: *u8, numRows: i32, numCols: i32, rowStride: i32, colStride: i32, pFloatR: [*]f32, pFloatG: [*]f32, pFloatB: [*]f32) void {
     var pRrow: *u8 = pRbase;
     var pGrow: *u8 = pGbase;
     var pBrow: *u8 = pBbase;
@@ -22,7 +22,7 @@ pub fn fillFloatRGB(pRbase: *u8, pGbase: *u8, pBbase: *u8, numRows: i32, numCols
     }
 }
 
-pub fn fillFloatRGBFromGrey(pbase: *u8, numRows: i32, numCols: i32, rowStride: i32, colStride: i32, pFloatR: *f32, pFloatG: *f32, pFloatB: *f32) void {
+pub fn fillFloatRGBFromGrey(pbase: *u8, numRows: i32, numCols: i32, rowStride: i32, colStride: i32, pFloatR: [*]f32, pFloatG: [*]f32, pFloatB: [*]f32) void {
     var prow: *u8 = pbase;
     for (0..numRows) |i| {
         var p: *u8 = prow;
@@ -41,15 +41,15 @@ const luma_from_R_coeff = 0.299;
 const luma_from_G_coeff = 0.587;
 const luma_from_B_coeff = 0.114;
 
-pub fn fillFloatLumaFromRGB(pRbase: *u8, pGbase: *u8, pBbase: *u8, numRows: i32, numCols: i32, rowStride: i32, colStride: i32, luma: *f32) void {
-    var pRrow: *u8 = pRbase;
-    var pGrow: *u8 = pGbase;
-    var pBrow: *u8 = pBbase;
+pub fn fillFloatLumaFromRGB(pRbase: [*]u8, pGbase: [*]u8, pBbase: [*]u8, numRows: u32, numCols: u32, rowStride: u32, colStride: u32, luma: [*]f32) void {
+    var pRrow = pRbase;
+    var pGrow = pGbase;
+    var pBrow = pBbase;
 
     for (0..numRows) |i| {
-        var pR: *u8 = pRrow;
-        var pG: *u8 = pGrow;
-        var pB: *u8 = pBrow;
+        var pR = pRrow;
+        var pG = pGrow;
+        var pB = pBrow;
         for (0..numCols) |j| {
             const yval: f32 = luma_from_R_coeff * (*pR) + luma_from_G_coeff * (*pG) + luma_from_B_coeff * (*pB);
             luma[i * numCols + j] = yval;
@@ -63,10 +63,10 @@ pub fn fillFloatLumaFromRGB(pRbase: *u8, pGbase: *u8, pBbase: *u8, numRows: i32,
     }
 }
 
-pub fn fillFloatLumaFromGrey(pbase: *u8, numRows: i32, numCols: i32, rowStride: i32, colStride: i32, luma: *f32) void {
-    var prow: *u8 = pbase;
+pub fn fillFloatLumaFromGrey(pbase: [*]u8, numRows: u32, numCols: u32, rowStride: u32, colStride: u32, luma: [*]f32) void {
+    var prow = pbase;
     for (0..numRows) |i| {
-        var p: *u8 = prow;
+        var p = prow;
         for (0..numCols) |j| {
             luma[i * numCols + j] = *p;
             p += colStride;
@@ -75,17 +75,17 @@ pub fn fillFloatLumaFromGrey(pbase: *u8, numRows: i32, numCols: i32, rowStride: 
     }
 }
 
-pub fn decimateFloat(in: *f32, inNumRows: i32, inNumCols: i32, out: *f32, outNumRows: i32, outNumCols: i32) void {
+pub fn decimateFloat(in: [*]f32, inNumRows: u32, inNumCols: u32, out: [*]f32, outNumRows: u32, outNumCols: u32) void {
     for (0..outNumRows) |outi| {
-        const ini: i32 = (((outi + 0.5) * inNumRows) / outNumRows);
+        const ini: u32 = @intFromFloat((((@as(f32, @floatFromInt(outi)) + 0.5) * @as(f32, @floatFromInt(inNumRows))) / @as(f32, @floatFromInt(outNumRows))));
         for (0..outNumCols) |outj| {
-            const inj = ((outj + 0.5) * inNumCols) / outNumCols;
+            const inj: u32 = @intFromFloat(((@as(f32, @floatFromInt(outj)) + 0.5) * @as(f32, @floatFromInt(inNumCols))) / @as(f32, @floatFromInt(outNumCols)));
             out[outi * outNumCols + outj] = in[ini * inNumCols + inj];
         }
     }
 }
 
-pub fn scaleFloatLuma(fullBuffer1: *f32, fullBuffer2: *f32, oldNumRows: i32, oldNumCols: i32, numJaroszXYPasses: i32, scaledLuma: *f32, newNumRows: i32, newNumCols: i32) void {
+pub fn scaleFloatLuma(fullBuffer1: [*]f32, fullBuffer2: [*]f32, oldNumRows: u32, oldNumCols: u32, numJaroszXYPasses: u32, scaledLuma: [*]f32, newNumRows: u32, newNumCols: u32) void {
     const windowSizeAlongRows = computeJaroszFilterWindowSize(oldNumCols, newNumCols);
     const windowSizeAlongCols = computeJaroszFilterWindowSize(oldNumRows, newNumRows);
 
@@ -94,7 +94,7 @@ pub fn scaleFloatLuma(fullBuffer1: *f32, fullBuffer2: *f32, oldNumRows: i32, old
     decimateFloat(fullBuffer1, oldNumRows, oldNumCols, scaledLuma, newNumRows, newNumCols);
 }
 
-pub fn scaleFloatRGB(fullBufferR1: *f32, fullBufferG1: *f32, fullBufferB1: *f32, fullBufferR2: *f32, fullBufferG2: *f32, fullBufferB2: *f32, oldNumRows: i32, oldNumCols: i32, numJaroszXYPasses: i32, scaledR: *f32, scaledG: *f32, scaledB: *f32, newNumRows: i32, newNumCols: i32) void {
+pub fn scaleFloatRGB(fullBufferR1: [*]f32, fullBufferG1: [*]f32, fullBufferB1: [*]f32, fullBufferR2: [*]f32, fullBufferG2: [*]f32, fullBufferB2: [*]f32, oldNumRows: u32, oldNumCols: u32, numJaroszXYPasses: u32, scaledR: [*]f32, scaledG: [*]f32, scaledB: [*]f32, newNumRows: u32, newNumCols: u32) void {
     if ((newNumRows == oldNumRows) and (newNumCols == oldNumCols)) {
         // pdq comment:
         // e.g., for video-frame processing when we've already used ffmpeg to downsample for us.
@@ -119,24 +119,24 @@ pub fn scaleFloatRGB(fullBufferR1: *f32, fullBufferG1: *f32, fullBufferB1: *f32,
     }
 }
 
-pub fn box1DFloat(invec: *f32, outvec: *f32, vectorLen: i32, stride: i32, fullWindowSize: i32) void {
+pub fn box1DFloat(invec: [*]f32, outvec: [*]f32, vectorLen: u32, stride: u32, fullWindowSize: u32) void {
     const halfWindowSize = (fullWindowSize + 2) / 2;
     const phase1NReps = halfWindowSize - 1;
     const phase2NReps = fullWindowSize - halfWindowSize + 1;
     const phase3NReps = vectorLen - fullWindowSize;
     const phase4NReps = halfWindowSize - 1;
 
-    var li: i32 = 0;
-    var ri: i32 = 0;
-    var oi: i32 = 0;
+    var li: u32 = 0;
+    var ri: u32 = 0;
+    var oi: u32 = 0;
 
     var sum: f32 = 0;
-    var currentWindowSize: i32 = 0;
+    var currentWindowSize: f32 = 0;
 
     // PHASE 1: ACCUMULATE FIRST SUM NO WRITES
     for (0..phase1NReps) |_| {
         sum += invec[ri];
-        currentWindowSize + 1;
+        currentWindowSize += 1;
         ri += stride;
     }
 
@@ -169,25 +169,25 @@ pub fn box1DFloat(invec: *f32, outvec: *f32, vectorLen: i32, stride: i32, fullWi
     }
 }
 
-pub fn computeJaroszFilterWindowSize(oldDimension: i32, newDimension: i32) i32 {
+pub fn computeJaroszFilterWindowSize(oldDimension: u32, newDimension: u32) u32 {
     return (oldDimension + 2 * newDimension - 1) / (2 * newDimension);
 }
 
-pub fn jaroszFilterFloat(buffer1: *f32, buffer2: *f32, numRows: i32, numCols: i32, windowSizeAlongRows: i32, windowSizeAlongCols: i32, nreps: i32) void {
+pub fn jaroszFilterFloat(buffer1: [*]f32, buffer2: [*]f32, numRows: u32, numCols: u32, windowSizeAlongRows: u32, windowSizeAlongCols: u32, nreps: u32) void {
     for (0..nreps) |_| {
         boxAlongRowsFloat(buffer1, buffer2, numRows, numCols, windowSizeAlongRows);
         boxAlongColsFloat(buffer2, buffer1, numRows, numCols, windowSizeAlongCols);
     }
 }
 
-pub fn boxAlongRowsFloat(in: *f32, out: *f32, numRows: i32, numCols: i32, windowSize: i32) void {
+pub fn boxAlongRowsFloat(in: [*]f32, out: [*]f32, numRows: u32, numCols: u32, windowSize: u32) void {
     for (0..numRows) |i| {
-        box1DFloat(&in[i * numCols], &out[i * numCols], numCols, 1, windowSize);
+        box1DFloat(in[i * numCols ..], out[i * numCols ..], numCols, 1, windowSize);
     }
 }
 
-pub fn boxAlongColsFloat(in: *f32, out: *f32, numRows: i32, numCols: i32, windowSize: i32) void {
+pub fn boxAlongColsFloat(in: [*]f32, out: [*]f32, numRows: u32, numCols: u32, windowSize: u32) void {
     for (0..numCols) |j| {
-        box1DFloat(&in[j], &out[j], numRows, numCols, windowSize);
+        box1DFloat(in[j..], out[j..], numRows, numCols, windowSize);
     }
 }
