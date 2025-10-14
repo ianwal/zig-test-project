@@ -1,40 +1,8 @@
 const torben = @import("torben.zig");
 const downscaling = @import("downscaling.zig");
 const std = @import("std");
+const Hash256 = @import("hash256.zig").Hash256;
 const Allocator = std.mem.Allocator;
-
-pub const Hash256 = struct {
-    w: [16]u16 = std.mem.zeroes([16]u16),
-
-    // ----------------------------------------------------------------
-    // 16-bit words are essential for the MIH data structure.
-    // Read more at https://fburl.com/pdq-hashing-mih
-    const HASH256_NUM_BITS = 256;
-    const HASH256_NUM_WORDS = 16;
-    const HASH256_TEXT_LENGTH = 65;
-
-    pub fn clear(self: *Hash256) void {
-        self.w = std.mem.zeroes([16]u16);
-    }
-
-    pub fn setBit(self: *Hash256, k: u32) void {
-        const uk: u32 = @intCast(k); // Assumes k >= 0; add checks if necessary
-        const idx: usize = @intCast((uk & 0xFF) >> 4);
-        const bit_pos: u4 = @truncate(uk & 0x0F);
-        self.w[idx] |= (@as(u16, 1) << bit_pos);
-    }
-
-    pub fn format(self: *const Hash256) ![64]u8 {
-        var result: [64]u8 = undefined;
-        _ = try std.fmt.bufPrint(&result, "{x:04}{x:04}{x:04}{x:04}{x:04}{x:04}{x:04}{x:04}{x:04}{x:04}{x:04}{x:04}{x:04}{x:04}{x:04}{x:04}", .{
-            self.w[15], self.w[14], self.w[13], self.w[12],
-            self.w[11], self.w[10], self.w[9],  self.w[8],
-            self.w[7],  self.w[6],  self.w[5],  self.w[4],
-            self.w[3],  self.w[2],  self.w[1],  self.w[0],
-        });
-        return result;
-    }
-};
 
 pub fn fillFloatLumaFromRGB(
     pRbase: []const u8,
@@ -82,9 +50,6 @@ pub fn pdqHash256FromFloatLuma(fullBuffer1: []f32, fullBuffer2: []f32, numRows: 
     pdqBuffer16x16ToBits(buffer16x16, hash);
 }
 
-// Tent filter.
-const PDQ_NUM_JAROSZ_XY_PASSES = 2;
-
 pub fn pdqFloat256FromFloatLuma(fullBuffer1: []f32, fullBuffer2: []f32, numRows: u32, numCols: u32, buffer64x64: *[64][64]f32, buffer16x64: *[16][64]f32, outputBuffer16x16: *[16][16]f32, quality: *u32) void {
     if ((numRows == 64) and (numCols == 64)) {
         // e.g., for video-frame processing when we've already used ffmpeg
@@ -101,6 +66,9 @@ pub fn pdqFloat256FromFloatLuma(fullBuffer1: []f32, fullBuffer2: []f32, numRows:
         // Downsample (blur and decimate)
         const windowSizeAlongRows = downscaling.computeJaroszFilterWindowSize(numCols, 64);
         const windowSizeAlongCols = downscaling.computeJaroszFilterWindowSize(numRows, 64);
+
+        // Tent filter.
+        const PDQ_NUM_JAROSZ_XY_PASSES = 2;
 
         downscaling.jaroszFilterFloat(fullBuffer1.ptr, fullBuffer2.ptr, numRows, numCols, windowSizeAlongRows, windowSizeAlongCols, PDQ_NUM_JAROSZ_XY_PASSES);
 
@@ -151,7 +119,7 @@ const dctMatrix64 = blk: {
     var i: usize = 0;
     while (i < num_rows) : (i += 1) {
         var j: usize = 0;
-        @setEvalBranchQuota(10000);
+        @setEvalBranchQuota(2500);
         while (j < num_cols) : (j += 1) {
             const angle: f64 = (pi / 2.0 / @as(f64, @floatFromInt(num_cols))) * (@as(f64, @floatFromInt(i + 1)) * @as(f64, @floatFromInt(2 * j + 1)));
             matrix[i][j] = @floatCast(matrix_scale_factor * std.math.cos(angle));

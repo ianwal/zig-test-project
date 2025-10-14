@@ -1,41 +1,3 @@
-pub fn fillFloatRGB(pRbase: *u8, pGbase: *u8, pBbase: *u8, numRows: i32, numCols: i32, rowStride: i32, colStride: i32, pFloatR: [*]f32, pFloatG: [*]f32, pFloatB: [*]f32) void {
-    var pRrow: *u8 = pRbase;
-    var pGrow: *u8 = pGbase;
-    var pBrow: *u8 = pBbase;
-
-    for (0..numRows) |i| {
-        var pR: *u8 = pRrow;
-        var pG: *u8 = pGrow;
-        var pB: *u8 = pBrow;
-
-        for (0..numCols) |j| {
-            pFloatR[i * numCols + j] = *pR;
-            pFloatG[i * numCols + j] = *pG;
-            pFloatB[i * numCols + j] = *pB;
-            pR += colStride;
-            pG += colStride;
-            pB += colStride;
-        }
-        pRrow += rowStride;
-        pGrow += rowStride;
-        pBrow += rowStride;
-    }
-}
-
-pub fn fillFloatRGBFromGrey(pbase: *u8, numRows: i32, numCols: i32, rowStride: i32, colStride: i32, pFloatR: [*]f32, pFloatG: [*]f32, pFloatB: [*]f32) void {
-    var prow: *u8 = pbase;
-    for (0..numRows) |i| {
-        var p: *u8 = prow;
-        for (0..numCols) |j| {
-            pFloatR[i * numCols + j] = *p;
-            pFloatG[i * numCols + j] = *p;
-            pFloatB[i * numCols + j] = *p;
-            p += colStride;
-        }
-    }
-    prow += rowStride;
-}
-
 // From Wikipedia: standard RGB to luminance (the 'Y' in 'YUV').
 const luma_from_R_coeff = 0.299;
 const luma_from_G_coeff = 0.587;
@@ -60,18 +22,6 @@ pub fn fillFloatLumaFromRGB(pRbase: [*]u8, pGbase: [*]u8, pBbase: [*]u8, numRows
         pRrow += rowStride;
         pGrow += rowStride;
         pBrow += rowStride;
-    }
-}
-
-pub fn fillFloatLumaFromGrey(pbase: [*]u8, numRows: u32, numCols: u32, rowStride: u32, colStride: u32, luma: [*]f32) void {
-    var prow = pbase;
-    for (0..numRows) |i| {
-        var p = prow;
-        for (0..numCols) |j| {
-            luma[i * numCols + j] = *p;
-            p += colStride;
-        }
-        prow += rowStride;
     }
 }
 
@@ -175,19 +125,11 @@ pub fn computeJaroszFilterWindowSize(oldDimension: u32, newDimension: u32) u32 {
 
 pub fn jaroszFilterFloat(buffer1: [*]f32, buffer2: [*]f32, numRows: u32, numCols: u32, windowSizeAlongRows: u32, windowSizeAlongCols: u32, nreps: u32) void {
     for (0..nreps) |_| {
-        boxAlongRowsFloat(buffer1, buffer2, numRows, numCols, windowSizeAlongRows);
-        boxAlongColsFloat(buffer2, buffer1, numRows, numCols, windowSizeAlongCols);
-    }
-}
-
-pub fn boxAlongRowsFloat(in: [*]f32, out: [*]f32, numRows: u32, numCols: u32, windowSize: u32) void {
-    for (0..numRows) |i| {
-        box1DFloat(in[i * numCols ..], out[i * numCols ..], numCols, 1, windowSize);
-    }
-}
-
-pub fn boxAlongColsFloat(in: [*]f32, out: [*]f32, numRows: u32, numCols: u32, windowSize: u32) void {
-    for (0..numCols) |j| {
-        box1DFloat(in[j..], out[j..], numRows, numCols, windowSize);
+        for (0..numRows) |i| {
+            box1DFloat(buffer1[i * numCols ..], buffer2[i * numCols ..], numCols, 1, windowSizeAlongRows);
+        }
+        for (0..numCols) |j| {
+            box1DFloat(buffer2[j..], buffer1[j..], numRows, numCols, windowSizeAlongCols);
+        }
     }
 }
