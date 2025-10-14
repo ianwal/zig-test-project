@@ -8,10 +8,10 @@ Enter nix-shell:
 nix-shell
 ```
 
-Run zig tests:
+Run zig tests and print out test results:
 
 ```sh
-
+zig test src/main.zig 2>&1 | cat
 ```
 
 Build C++ and run:

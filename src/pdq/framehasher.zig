@@ -53,6 +53,9 @@ pub const PDQFrameBufferHasher = struct {
     pub fn deinit(self: *Self) void {
         self.allocator.free(self.fullLumaImageBuffer1);
         self.allocator.free(self.fullLumaImageBuffer2);
+        self.allocator.free(self.buffer64x64);
+        self.allocator.free(self.buffer16x64);
+        self.allocator.free(self.buffer16x16);
         self.allocator.destroy(self);
     }
 
@@ -60,6 +63,7 @@ pub const PDQFrameBufferHasher = struct {
     pub fn hashFrame(self: *Self, buffer: []u8, hashResult: *Hash256, hashQuality: *u32) anyerror!void {
         const MIN_HASHABLE_DIM = 5;
         if ((self.frameHeight < MIN_HASHABLE_DIM) or (self.frameWidth < MIN_HASHABLE_DIM)) {
+            hashQuality.* = 0;
             hashResult.clear();
             return error.Failed;
         }
