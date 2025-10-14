@@ -20,6 +20,13 @@ Build C++ and run:
 zig c++ c-src/torben.cpp -std=c++20 -o test && ./test
 ```
 
+Build CLI program and run:
+
+```sh
+zig build run
+./zig-out/bin/pdq-hash-image "original-512x512.rgb" 512 512
+```
+
 ## Resources
 
 https://github.com/grokkhub/zig-cheatsheet
